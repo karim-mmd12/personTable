@@ -1,16 +1,19 @@
-import React, { Component } from 'react'
+import React, { Component, Fragment } from 'react'
 import { Person } from '../interfaces/Person'
 import { getPersons } from '../services/fakePersonsService'
 import Active from './common/active'
 import _ from 'lodash'
+import SearchInput from './common/searchInput'
 
 class Persons extends Component {
   state: {
     persons: Person[]
     sortBy: { path: string; order: 'asc' | 'desc' }
+    searchQuery: string
   } = {
     persons: [],
     sortBy: { path: 'name', order: 'asc' },
+    searchQuery: '',
   }
   componentDidMount = () => {
     this.setState({ persons: getPersons() })
@@ -22,7 +25,7 @@ class Persons extends Component {
     persons[index].isActive = !persons[index].isActive
     this.setState({ persons })
   }
-  handleSortClick(path: string): void {
+  handleSortClick = (path: string) => {
     const sortBy = { ...this.state.sortBy }
     if (sortBy.path === path)
       sortBy.order = sortBy.order === 'asc' ? 'desc' : 'asc'
@@ -32,45 +35,61 @@ class Persons extends Component {
     }
     this.setState({ sortBy })
   }
+  handleSearch = (query: string) => {
+    this.setState({ searchQuery: query })
+  }
   render() {
-    const { persons, sortBy } = this.state
+    const { persons, sortBy, searchQuery } = this.state
     const { length: count } = persons
-    const sortedPersons = _.orderBy(persons, [sortBy.path], [sortBy.order])
+    let filteredPersons = persons
+    if (searchQuery) {
+      filteredPersons = persons.filter((p) =>
+        p.name.toLowerCase().startsWith(searchQuery.toLowerCase())
+      )
+    }
+    const sortedPersons = _.orderBy(
+      filteredPersons,
+      [sortBy.path],
+      [sortBy.order]
+    )
     if (count === 0) return <p>There are no persons</p>
     return (
-      <table className='table table-striped'>
-        <thead>
-          <tr>
-            <th onClick={() => this.handleSortClick('name')}>
-              Name<i className='fa fa-sort' aria-hidden='true'></i>
-            </th>
-            <th onClick={() => this.handleSortClick('gender')}>
-              Gender<i className='fa fa-sort' aria-hidden='true'></i>
-            </th>
-            <th onClick={() => this.handleSortClick('company')}>
-              Company<i className='fa fa-sort' aria-hidden='true'></i>
-            </th>
-            <th onClick={() => this.handleSortClick('isActive')}>
-              Status<i className='fa fa-sort' aria-hidden='true'></i>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedPersons.map((person) => (
-            <tr key={person.id}>
-              <td>{person.name}</td>
-              <td>{person.gender}</td>
-              <td>{person.company}</td>
-              <td>
-                <Active
-                  isActive={person.isActive}
-                  onClick={() => this.handleClick(person)}
-                />
-              </td>
+      <Fragment>
+        <SearchInput value={searchQuery} onChange={this.handleSearch} />
+        <table className='table table-striped'>
+          <thead>
+            <tr className='clickable'>
+              <th onClick={() => this.handleSortClick('name')}>
+                Name<i className='fa fa-sort' aria-hidden='true'></i>
+              </th>
+              <th onClick={() => this.handleSortClick('gender')}>
+                Gender<i className='fa fa-sort' aria-hidden='true'></i>
+              </th>
+              <th onClick={() => this.handleSortClick('company')}>
+                Company<i className='fa fa-sort' aria-hidden='true'></i>
+              </th>
+              <th onClick={() => this.handleSortClick('isActive')}>
+                Status<i className='fa fa-sort' aria-hidden='true'></i>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sortedPersons.map((person) => (
+              <tr key={person.id}>
+                <td>{person.name}</td>
+                <td>{person.gender}</td>
+                <td>{person.company}</td>
+                <td>
+                  <Active
+                    isActive={person.isActive}
+                    onClick={() => this.handleClick(person)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Fragment>
     )
   }
 }
