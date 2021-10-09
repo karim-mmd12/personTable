@@ -35,8 +35,12 @@ class Persons extends Component {
     }
     this.setState({ sortBy })
   }
+  timer = setTimeout(() => {}, 1)
   handleSearch = (query: string) => {
-    this.setState({ searchQuery: query })
+    clearTimeout(this.timer)
+    this.timer = setTimeout(() => {
+      this.setState({ searchQuery: query })
+    }, 300)
   }
   render() {
     const { persons, sortBy, searchQuery } = this.state
