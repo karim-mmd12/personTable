@@ -5,16 +5,25 @@ import Active from './common/active'
 import _ from 'lodash'
 import SearchInput from './common/searchInput'
 
-class Persons extends Component {
-  state: {
+class Persons extends Component<
+  {},
+  {
     persons: Person[]
     sortBy: { path: string; order: 'asc' | 'desc' }
     searchQuery: string
-  } = {
-    persons: [],
-    sortBy: { path: 'name', order: 'asc' },
-    searchQuery: '',
   }
+> {
+  handleSearchThrottled: _.DebouncedFunc<(query: string) => void>
+  constructor(props: any) {
+    super(props)
+    this.state = {
+      persons: [],
+      sortBy: { path: 'name', order: 'asc' },
+      searchQuery: '',
+    }
+    this.handleSearchThrottled = _.throttle(this.handleSearch, 400)
+  }
+
   componentDidMount = () => {
     this.setState({ persons: getPersons() })
   }
@@ -35,12 +44,8 @@ class Persons extends Component {
     }
     this.setState({ sortBy })
   }
-  timer = setTimeout(() => {}, 1)
   handleSearch = (query: string) => {
-    clearTimeout(this.timer)
-    this.timer = setTimeout(() => {
-      this.setState({ searchQuery: query })
-    }, 300)
+    this.setState({ searchQuery: query })
   }
   render() {
     const { persons, sortBy, searchQuery } = this.state
@@ -59,7 +64,10 @@ class Persons extends Component {
     if (count === 0) return <p>There are no persons</p>
     return (
       <Fragment>
-        <SearchInput value={searchQuery} onChange={this.handleSearch} />
+        <SearchInput
+          value={searchQuery}
+          onChange={this.handleSearchThrottled}
+        />
         <table className='table table-striped'>
           <thead>
             <tr className='clickable'>
